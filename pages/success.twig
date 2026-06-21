@@ -1,0 +1,69 @@
+{% extends 'layouts/base.twig' %}
+
+{% block title %}{{ trans('success.title') }} - {{ store.name }}{% endblock %}
+
+{% block content %}
+{# Nav Bar #}
+{% include 'components/navbar.twig' %}
+
+<div class="max-w-2xl mx-auto px-6 py-16 text-center">
+    <div class="w-20 h-20 mx-auto mb-6 rounded-2xl accent-bg flex items-center justify-center">
+        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+        </svg>
+    </div>
+
+    <h1 class="text-4xl font-black text-white mb-4">{{ trans('success.thank_you') }}</h1>
+    <p class="text-white/50 text-lg mb-8">
+        {{ trans('success.thank_you_message') }}
+        {% if player_username %}
+        <br>{{ trans('success.items_delivered_to') }} <strong class="text-white">{{ player_username }}</strong>
+        {% endif %}
+    </p>
+
+    {% if order %}
+    <div class="bg-[#1e1e24] rounded-2xl p-6 mb-8">
+        <div class="text-white/40 text-sm uppercase tracking-wider mb-2">{{ trans('success.order_id') }}</div>
+        <div class="text-xl font-mono text-white mb-4">{{ order.id }}</div>
+        <div class="text-3xl font-black accent-text">{{ order.total|localized_price }}</div>
+    </div>
+    {% endif %}
+
+    {# Gift Cards Section #}
+    {% if gift_cards is defined and gift_cards|length > 0 %}
+    <div class="mb-8">
+        <h2 class="text-xl font-bold text-white mb-4">{{ trans('success.your_gift_cards') }}</h2>
+        <p class="text-white/50 text-sm mb-6">{{ trans('success.save_codes') }}</p>
+        <div class="space-y-4">
+            {% for card in gift_cards %}
+            <div class="bg-[#1e1e24] rounded-2xl p-6 border border-white/5" x-data="{ copied: false }">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="text-2xl font-bold text-white">{{ card.amount|localized_price }}</div>
+                    <div class="text-white/40 text-sm">{{ trans('success.expires') }} {{ card.expires_at }}</div>
+                </div>
+                <div class="flex items-center gap-3 bg-black/30 rounded-xl p-4">
+                    <div class="flex-1 text-xl font-mono font-bold text-white tracking-wider">{{ card.code }}</div>
+                    <button
+                        @click="navigator.clipboard.writeText('{{ card.code }}'); copied = true; setTimeout(() => copied = false, 2000)"
+                        class="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                    >
+                        <template x-if="!copied">
+                            <svg class="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        </template>
+                        <template x-if="copied">
+                            <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        </template>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <a href="/" class="inline-flex items-center gap-2 px-8 py-4 rounded-xl accent-bg font-bold text-white hover:opacity-90 transition-all">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        {{ trans('success.continue_shopping') }}
+    </a>
+</div>
+{% endblock %}

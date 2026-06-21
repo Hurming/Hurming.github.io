@@ -1,0 +1,75 @@
+{% extends 'layouts/base.twig' %}
+
+{% block title %}{{ trans('checkout.title') }} - {{ store.name }}{% endblock %}
+
+{% block content %}
+{# Nav Bar #}
+{% include 'components/navbar.twig' %}
+
+<div class="max-w-4xl mx-auto px-6 py-8" x-data="checkoutPage()">
+    <a href="/" class="inline-flex items-center gap-2 text-white/50 hover:text-white transition-colors mb-6">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <span class="text-sm font-medium">{{ trans('checkout.back_to_store') }}</span>
+    </a>
+
+    {# Error Message (from failed payment redirects) #}
+    {% if error %}
+    <div class="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3">
+        <svg class="w-5 h-5 text-red-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <div>
+            <p class="text-red-400 font-medium">{{ error }}</p>
+            <p class="text-red-400/60 text-sm mt-1">{{ trans('checkout.try_again') }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <h1 class="text-3xl font-black text-white mb-8">{{ trans('checkout.title') }}</h1>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="space-y-5">
+            {# Player Info Section #}
+            <div class="bg-[#1e1e24] rounded-2xl p-6">
+                <h2 class="text-lg font-bold text-white mb-4">{{ trans('checkout.your_information') }}</h2>
+                {{ hook('checkout.player_info') }}
+            </div>
+        </div>
+
+        <div class="space-y-5">
+            {# Order Summary #}
+            <div class="bg-[#1e1e24] rounded-2xl p-6">
+                <h2 class="text-lg font-bold text-white mb-4">{{ trans('checkout.order_summary') }}</h2>
+                {{ hook('checkout.order_summary') }}
+            </div>
+
+            {# Gifting Section (if enabled) - after order summary #}
+            {{ hook('checkout.gifting') }}
+
+            {# Coupon Code (if enabled) #}
+            {{ hook('checkout.coupon') }}
+
+            {# Discord Roles Callout (if cart has packages with Discord roles) #}
+            {{ hook('checkout.discord_roles') }}
+
+            {# Pay Now Button - Opens Modal #}
+            <div>
+                {{ hook('checkout.pay_button') }}
+            </div>
+
+            {# Terms #}
+            <p class="text-center text-white/40 text-sm">
+                {{ trans('checkout.agree_terms') }}
+                {% if store.terms_url %}
+                <a href="{{ store.terms_url }}" target="_blank" class="underline hover:text-white">{{ trans('terms_of_service') }}</a>
+                {% else %}
+                {{ trans('terms_of_service') }}
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    {# Payment Modal #}
+    {{ hook('checkout.payment_modal') }}
+</div>
+{% endblock %}

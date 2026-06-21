@@ -1,0 +1,233 @@
+{% extends "layouts/base.twig" %}
+
+{% block title %}My Account - {{ store.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-6 py-12" x-data="accountPage()">
+    {# Verification Modal #}
+    <template x-if="requiresVerification">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div class="absolute inset-0 bg-black/70"></div>
+            <div class="relative bg-[#1e1e24] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+                <div class="p-6 border-b border-white/5">
+                    <h3 class="text-xl font-bold text-white">Verify Your Account</h3>
+                </div>
+                <div class="p-6 text-center">
+                    <div class="w-20 h-20 mx-auto mb-4 rounded-2xl bg-[#2a2a34] flex items-center justify-center">
+                        <svg class="w-10 h-10 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                    </div>
+                    <p class="text-white/60 mb-2">To view your purchase history, please verify your account.</p>
+                    <p class="text-white/60 mb-6">Run <code class="px-2 py-1 bg-[#2a2a34] rounded-lg text-white font-mono">/verify</code> on the server to get your code.</p>
+                    <div class="mb-4">
+                        <input type="text" x-model="verifyCode" @keydown.enter="submitVerification()"
+                               placeholder="Enter 6-digit code"
+                               class="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-xl text-white text-center text-2xl font-mono tracking-widest placeholder-white/30 focus:outline-none focus:border-white/20"
+                               maxlength="6" pattern="[0-9]*" inputmode="numeric">
+                    </div>
+                    <p x-show="verifyError" x-text="verifyError" x-cloak class="text-red-400 text-sm mb-4"></p>
+                    <button @click="submitVerification()" :disabled="verifyLoading || verifyCode.length !== 6"
+                            class="w-full py-3 rounded-xl font-bold text-white transition-all disabled:opacity-50 accent-bg">
+                        <span x-show="!verifyLoading">Verify</span>
+                        <span x-show="verifyLoading" x-cloak class="flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                            Verifying...
+                        </span>
+                    </button>
+                    <button @click="logout()" class="w-full mt-3 py-3 rounded-xl font-semibold text-white/50 hover:text-white transition-colors">
+                        Use Different Account
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    {# Header #}
+    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-12">
+        <template x-if="player">
+            <div class="flex items-center gap-4">
+                <img :src="player.avatar_url" alt="" class="w-20 h-20 rounded-2xl">
+                <div>
+                    <h1 class="text-3xl font-black text-white" x-text="player.username"></h1>
+                    <p class="text-white/50">Welcome back to {{ store.name }}</p>
+                </div>
+            </div>
+        </template>
+        <div class="flex-1"></div>
+        <button @click="logout()" class="px-6 py-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors font-semibold">
+            Logout
+        </button>
+    </div>
+
+    {# Stats #}
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
+        <div class="bg-[#1e1e24] rounded-2xl p-6 border border-white/5">
+            <div class="text-white/40 text-sm uppercase tracking-wider mb-1">Total Purchases</div>
+            <div class="text-3xl font-black text-white" x-text="purchases.length"></div>
+        </div>
+        <div class="bg-[#1e1e24] rounded-2xl p-6 border border-white/5">
+            <div class="text-white/40 text-sm uppercase tracking-wider mb-1">Total Spent</div>
+            <div class="text-3xl font-black accent-text" x-text="formatPrice(totalSpent)"></div>
+        </div>
+        <div class="bg-[#1e1e24] rounded-2xl p-6 border border-white/5">
+            <div class="text-white/40 text-sm uppercase tracking-wider mb-1">Member Since</div>
+            <template x-if="player && player.last_login_at">
+                <div class="text-3xl font-black text-white" x-text="formatDate(player.last_login_at)"></div>
+            </template>
+        </div>
+    </div>
+
+    {# Purchases #}
+    <div class="bg-[#1e1e24] rounded-2xl border border-white/5 overflow-hidden">
+        <div class="p-6 border-b border-white/5">
+            <h2 class="text-xl font-bold text-white">Purchase History</h2>
+        </div>
+
+        {# Loading #}
+        <template x-if="loading">
+            <div class="p-12 text-center">
+                <svg class="w-8 h-8 animate-spin text-white/30 mx-auto" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+            </div>
+        </template>
+
+        {# Empty State #}
+        <template x-if="!loading && purchases.length === 0">
+            <div class="p-12 text-center">
+                <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[#2a2a34] flex items-center justify-center">
+                    <svg class="w-8 h-8 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                </div>
+                <p class="text-white/50">No purchases yet</p>
+                <a href="/" class="inline-flex items-center gap-2 mt-4 px-6 py-3 rounded-xl accent-bg font-semibold text-white">
+                    Browse Store
+                </a>
+            </div>
+        </template>
+
+        {# Purchases List #}
+        <template x-if="!loading && purchases.length > 0">
+            <div class="divide-y divide-white/5">
+                <template x-for="purchase in purchases" :key="purchase.id">
+                    <div class="p-6 flex items-center gap-4">
+                        <template x-if="purchase.package && purchase.package.image_path">
+                            <img :src="'/storage/' + purchase.package.image_path" alt="" class="w-16 h-16 rounded-xl object-cover bg-[#2a2a34]">
+                        </template>
+                        <template x-if="!purchase.package || !purchase.package.image_path">
+                            <div class="w-16 h-16 rounded-xl bg-[#2a2a34] flex items-center justify-center">
+                                <svg class="w-6 h-6 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                </svg>
+                            </div>
+                        </template>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-semibold text-white truncate" x-text="purchase.package?.name || 'Unknown Package'"></div>
+                            <div class="text-sm text-white/40" x-text="formatDate(purchase.created_at)"></div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold text-white" x-text="formatPrice(purchase.payment_amount)"></div>
+                            <div class="text-xs px-2 py-1 rounded-lg"
+                                 :class="{
+                                    'bg-green-500/10 text-green-400': purchase.status === 'delivered',
+                                    'bg-yellow-500/10 text-yellow-400': purchase.status === 'pending',
+                                    'bg-red-500/10 text-red-400': purchase.status === 'failed'
+                                 }"
+                                 x-text="purchase.status"></div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </div>
+
+    {# Wishlist Section #}
+    {% if store.wishlist_enabled %}
+    <div class="bg-[#1e1e24] rounded-2xl border border-white/5 overflow-hidden mt-8" x-data="accountWishlist()" x-init="init()">
+        <div class="p-6 border-b border-white/5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-red-400" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                </div>
+                <h2 class="text-xl font-bold text-white">My Wishlist</h2>
+            </div>
+            <span class="text-white/40 text-sm" x-text="wishlistItems.length + ' items'"></span>
+        </div>
+
+        {# Loading #}
+        <template x-if="wishlistLoading">
+            <div class="p-12 text-center">
+                <svg class="w-8 h-8 animate-spin text-white/30 mx-auto" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+            </div>
+        </template>
+
+        {# Empty State #}
+        <template x-if="!wishlistLoading && wishlistItems.length === 0">
+            <div class="p-12 text-center">
+                <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[#2a2a34] flex items-center justify-center">
+                    <svg class="w-8 h-8 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                </div>
+                <p class="text-white/50">Your wishlist is empty</p>
+                <p class="text-white/30 text-sm mt-1">Click the heart icon on any product to add it to your wishlist</p>
+                <a href="/" class="inline-flex items-center gap-2 mt-4 px-6 py-3 rounded-xl accent-bg font-semibold text-white">
+                    Browse Store
+                </a>
+            </div>
+        </template>
+
+        {# Wishlist Items #}
+        <template x-if="!wishlistLoading && wishlistItems.length > 0">
+            <div class="divide-y divide-white/5">
+                <template x-for="item in wishlistItems" :key="item.package_id">
+                    <div class="p-6 flex items-center gap-4">
+                        <a :href="'/package/' + item.package.slug" class="shrink-0">
+                            <template x-if="item.package && item.package.image_path">
+                                <img :src="'/storage/' + item.package.image_path" alt="" class="w-16 h-16 rounded-xl object-cover bg-[#2a2a34]">
+                            </template>
+                            <template x-if="!item.package || !item.package.image_path">
+                                <div class="w-16 h-16 rounded-xl bg-[#2a2a34] flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                    </svg>
+                                </div>
+                            </template>
+                        </a>
+                        <div class="flex-1 min-w-0">
+                            <a :href="'/package/' + item.package.slug" class="font-semibold text-white truncate block hover:underline" x-text="item.package?.name || 'Unknown Package'"></a>
+                            <div class="flex items-center gap-2 mt-1">
+                                <template x-if="item.flash_sale_active">
+                                    <span class="text-xs px-2 py-0.5 rounded bg-gradient-to-r from-amber-500 to-red-500 text-white font-bold">ON SALE!</span>
+                                </template>
+                                <span class="text-sm text-white/40" x-text="'Added ' + new Date(item.created_at).toLocaleDateString()"></span>
+                            </div>
+                        </div>
+                        <div class="text-right flex items-center gap-4">
+                            <div>
+                                <template x-if="item.original_price && item.original_price > item.price">
+                                    <span class="text-sm text-white/40 line-through block" x-text="formatPrice(item.original_price)"></span>
+                                </template>
+                                <div class="font-bold" :class="item.flash_sale_active ? 'accent-text' : 'text-white'" x-text="formatPrice(item.price)"></div>
+                            </div>
+                            <button @click="removeFromWishlist(item.package_id)" class="w-9 h-9 rounded-lg bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center text-red-400 transition-colors" title="Remove from wishlist">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

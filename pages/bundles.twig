@@ -1,0 +1,213 @@
+{% extends "layouts/base.twig" %}
+
+{% block title %}Bundle Deals - {{ store.name }}{% endblock %}
+
+{% block content %}
+{# Nav Bar #}
+{% include 'components/navbar.twig' %}
+
+<div class="min-h-screen" x-data="bundlesPage()">
+    {# Hero Section #}
+    <div class="relative overflow-hidden border-b border-white/5">
+        <div class="absolute inset-0 bg-gradient-to-br from-cyan-600/10 via-transparent to-purple-600/10"></div>
+        <div class="max-w-6xl mx-auto px-6 py-16 relative">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-12 h-12 rounded-xl bg-cyan-500/10 flex items-center justify-center">
+                    <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    </svg>
+                </div>
+                <span class="px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-400 text-sm font-semibold">Save More</span>
+            </div>
+            <h1 class="text-5xl font-black text-white mb-3">Bundle Deals</h1>
+            <p class="text-white/50 text-lg max-w-xl">Buy more, save more! Combine multiple items in your cart to unlock exclusive bundle discounts.</p>
+        </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto px-6 py-12">
+        {# How It Works Section #}
+        <div class="mb-12">
+            <h2 class="text-xl font-bold text-white mb-6">How Bundle Deals Work</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-[#1e1e24] rounded-2xl p-6 border border-white/5">
+                    <div class="w-12 h-12 rounded-xl bg-cyan-500/10 flex items-center justify-center mb-4">
+                        <span class="text-2xl font-black text-cyan-400">1</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-2">Browse & Add</h3>
+                    <p class="text-white/50 text-sm">Browse our packages and add items to your cart. The more you add, the more you can save!</p>
+                </div>
+                <div class="bg-[#1e1e24] rounded-2xl p-6 border border-white/5">
+                    <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center mb-4">
+                        <span class="text-2xl font-black text-purple-400">2</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-2">Unlock Bundles</h3>
+                    <p class="text-white/50 text-sm">When your cart qualifies for a bundle deal, the discount is automatically applied at checkout.</p>
+                </div>
+                <div class="bg-[#1e1e24] rounded-2xl p-6 border border-white/5">
+                    <div class="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mb-4">
+                        <span class="text-2xl font-black text-green-400">3</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-2">Save Big</h3>
+                    <p class="text-white/50 text-sm">Enjoy your savings! Bundle discounts are applied automatically - no coupon code needed.</p>
+                </div>
+            </div>
+        </div>
+
+        {# Active Bundles #}
+        <div class="mb-8">
+            <h2 class="text-xl font-bold text-white mb-6">Available Bundle Deals</h2>
+
+            {% if bundles|length == 0 %}
+                <div class="bg-[#1e1e24] rounded-2xl p-12 text-center border border-white/5">
+                    <div class="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-2">No Active Bundles</h3>
+                    <p class="text-white/40">Check back later for bundle deals!</p>
+                </div>
+            {% else %}
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {% for bundle in bundles %}
+                        <div class="bg-[#1e1e24] rounded-2xl border border-white/5 overflow-hidden hover:border-white/10 transition-colors">
+                            {# Bundle Header #}
+                            <div class="p-6 border-b border-white/5">
+                                <div class="flex items-start justify-between gap-4">
+                                    <div>
+                                        <h3 class="text-xl font-bold text-white mb-1">{{ bundle.name }}</h3>
+                                        {% if bundle.description %}
+                                            <p class="text-white/50 text-sm">{{ bundle.description }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="shrink-0 px-4 py-2 rounded-xl text-center" style="background-color: {{ store.accent_color }}15">
+                                        {% if bundle.discount_type == 'percentage' %}
+                                            <div class="text-2xl font-black" style="color: {{ store.accent_color }}">{{ bundle.discount_value }}%</div>
+                                            <div class="text-xs text-white/50">OFF</div>
+                                        {% else %}
+                                            <div class="text-2xl font-black" style="color: {{ store.accent_color }}">{{ price(bundle.discount_value) }}</div>
+                                            <div class="text-xs text-white/50">OFF</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {# Bundle Details #}
+                            <div class="p-6 space-y-4">
+                                {# Requirements #}
+                                <div class="flex items-center gap-3 text-sm">
+                                    <div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                                        <svg class="w-4 h-4 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <span class="text-white/70">Minimum </span>
+                                        <span class="text-white font-semibold">{{ bundle.min_items }} item{{ bundle.min_items > 1 ? 's' : '' }}</span>
+                                        {% if bundle.max_items %}
+                                            <span class="text-white/70"> (max {{ bundle.max_items }})</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                {# Applicable Packages (if restricted) #}
+                                {% if bundle.packages|length > 0 %}
+                                    <div class="pt-4 border-t border-white/5">
+                                        <p class="text-xs text-white/40 uppercase tracking-wider font-semibold mb-3">Applies to these packages:</p>
+                                        <div class="flex flex-wrap gap-2">
+                                            {% for package in bundle.packages|slice(0, 6) %}
+                                                <a href="{{ package_url(package) }}" class="px-3 py-1.5 rounded-lg bg-white/5 text-white/70 text-sm hover:bg-white/10 hover:text-white transition-colors">
+                                                    {{ package.name }}
+                                                </a>
+                                            {% endfor %}
+                                            {% if bundle.packages|length > 6 %}
+                                                <span class="px-3 py-1.5 rounded-lg bg-white/5 text-white/40 text-sm">
+                                                    +{{ bundle.packages|length - 6 }} more
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <div class="flex items-center gap-2 text-sm">
+                                        <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        <span class="text-white/70">Applies to <span class="text-white font-semibold">all packages</span></span>
+                                    </div>
+                                {% endif %}
+
+                                {# Time Limited #}
+                                {% if bundle.ends_at %}
+                                    <div class="flex items-center gap-2 text-sm pt-2">
+                                        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        <span class="text-amber-400">Limited time offer</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            {# Bundle Action #}
+                            <div class="px-6 pb-6">
+                                <a href="/" class="block w-full py-3 rounded-xl text-center font-semibold text-white transition-all hover:brightness-110" style="background-color: {{ store.accent_color }}">
+                                    Start Shopping
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        {# Cart Preview - Show if cart has items #}
+        <template x-if="cartItems.length > 0">
+            <div class="mt-12 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-cyan-500/10 rounded-2xl p-8 border border-white/10">
+                <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-white mb-2">Your Cart Progress</h3>
+                        <p class="text-white/60">
+                            <span x-text="cartItems.length"></span> item<span x-show="cartItems.length !== 1">s</span> in cart
+                            <template x-if="appliedBundle">
+                                <span class="ml-2 px-2 py-0.5 rounded-full bg-green-500/10 text-green-400 text-sm font-semibold">
+                                    Bundle Applied!
+                                </span>
+                            </template>
+                        </p>
+                    </div>
+                    <a href="/checkout" class="px-8 py-4 rounded-xl font-semibold text-white transition-all hover:brightness-110" style="background-color: {{ store.accent_color }}">
+                        <span x-show="!appliedBundle">View Cart</span>
+                        <span x-show="appliedBundle">Checkout & Save!</span>
+                    </a>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('bundlesPage', () => ({
+        cartItems: [],
+        appliedBundle: null,
+
+        init() {
+            // Get cart items from the global cart store
+            this.$watch('$store.cart', () => {
+                this.updateFromStore();
+            });
+
+            // Initialize
+            setTimeout(() => this.updateFromStore(), 100);
+        },
+
+        updateFromStore() {
+            if (window.Alpine && window.Alpine.store && window.Alpine.store('cart')) {
+                this.cartItems = window.Alpine.store('cart').items || [];
+            }
+        }
+    }));
+});
+</script>
+{% endblock %}
