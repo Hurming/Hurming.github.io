@@ -1,0 +1,36 @@
+/* Custom theme styles */
+[x-cloak] { display: none !important; }
+
+.prose {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+    color: white;
+}
+
+.prose a {
+    color: var(--accent-color, #06b6d4);
+}
+
+.prose strong {
+    color: white;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
